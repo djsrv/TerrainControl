@@ -49,7 +49,16 @@ public class TCPlugin
 
         // Create the world type. WorldType registers itself in the constructor
         // - that is Mojang code, so don't blame me
-        new TCWorldType(this.worldLoader);
+        new TCWorldType(this.worldLoader, PluginStandardValues.PLUGIN_NAME, false);
+
+        File packsDir = new File(configsDir, "packs");
+        if (packsDir.exists())
+        {
+            for (File pack : packsDir.listFiles())
+            {
+                new TCWorldType(this.worldLoader, pack.getName(), true);
+            }
+        }
 
         // Start TerrainControl engine
         final ForgeEngine engine = new ForgeEngine(this.worldLoader);

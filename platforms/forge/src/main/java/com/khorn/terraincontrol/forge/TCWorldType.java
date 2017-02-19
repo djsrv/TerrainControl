@@ -22,18 +22,30 @@ public class TCWorldType extends WorldType
 {
 
     private final WorldLoader worldLoader;
+    private final boolean isPack;
 
-    public TCWorldType(WorldLoader worldLoader)
+    public TCWorldType(WorldLoader worldLoader, String name, boolean isPack)
     {
-        super(PluginStandardValues.PLUGIN_NAME);
+        super(name);
         this.worldLoader = Preconditions.checkNotNull(worldLoader, "worldLoader");
+        this.isPack = isPack;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public String getTranslateName() {
+        if (this.isPack)
+        {
+            return this.getWorldTypeName();
+        }
+        return super.getTranslateName();
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public boolean showWorldInfoNotice()
     {
-        return true;
+        return !this.isPack;
     }
 
     @Override
@@ -108,5 +120,10 @@ public class TCWorldType extends WorldType
             return 64;
         }
         return world.getConfigs().getWorldConfig().waterLevelMax;
+    }
+
+    public boolean getIsPack()
+    {
+        return this.isPack;
     }
 }

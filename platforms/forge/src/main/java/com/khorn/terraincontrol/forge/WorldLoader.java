@@ -20,6 +20,7 @@ import net.minecraft.util.IntIdentityHashBiMap;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -67,8 +68,12 @@ public final class WorldLoader
         return getWorld(WorldHelper.getName(world));
     }
 
-    protected File getWorldDir(String worldName)
+    protected File getWorldDir(String worldName, WorldType worldType)
     {
+        if (worldType != null && worldType instanceof TCWorldType && ((TCWorldType) worldType).getIsPack())
+        {
+            return new File(this.configsDir, "packs/" + worldType.getWorldTypeName());
+        }
         return new File(this.configsDir, "worlds/" + worldName);
     }
 
@@ -78,7 +83,6 @@ public final class WorldLoader
      * is the desired world type. As a workaround, we tentatively
      * load the configs if a config folder exists in the usual
      * location.
-     * @param server The Minecraft server.
      */
     public void onServerAboutToLoad()
     {
@@ -95,7 +99,12 @@ public final class WorldLoader
         {
             return;
         }
-        ForgeWorld forgeWorld = this.getOrCreateForgeWorld(worldName);
+        String worldTypeName = ((DedicatedServer) server).getStringProperty("level-type", "DEFAULT");
+        WorldType worldType = WorldType.parseWorldType(worldTypeName);
+        if (!(worldType instanceof TCWorldType)) {
+            return;
+        }
+        ForgeWorld forgeWorld = this.getOrCreateForgeWorld(worldName, worldType);
         if (forgeWorld == null)
         {
             // TerrainControl is probably not enabled for this world
@@ -141,7 +150,7 @@ public final class WorldLoader
     @Nullable
     public ForgeWorld getOrCreateForgeWorld(World mcWorld)
     {
-        ForgeWorld forgeWorld = this.getOrCreateForgeWorld(WorldHelper.getName(mcWorld));
+        ForgeWorld forgeWorld = this.getOrCreateForgeWorld(WorldHelper.getName(mcWorld), mcWorld.getWorldType());
         if (forgeWorld != null && forgeWorld.getWorld() == null)
         {
             forgeWorld.provideWorldInstance((WorldServer) mcWorld);
@@ -151,9 +160,9 @@ public final class WorldLoader
     }
 
     @Nullable
-    public ForgeWorld getOrCreateForgeWorld(String worldName)
+    public ForgeWorld getOrCreateForgeWorld(String worldName, WorldType worldType)
     {
-        File worldConfigsFolder = this.getWorldDir(worldName);
+        File worldConfigsFolder = this.getWorldDir(worldName, worldType);
         if (!worldConfigsFolder.exists())
         {
             // TerrainControl is probably not enabled for this world
